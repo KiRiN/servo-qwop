@@ -1,0 +1,87 @@
+<html>
+
+<head>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<script>
+    var url = 'http://192.168.11.200:8080';
+
+    var keyCodeMap = {
+        "81": 'q',
+        "87": 'w',
+        "79": 'o',
+        "80": 'p',
+    };
+    var keys = [ 'q', 'w', 'o', 'p' ];
+    var keyConfig = {
+        q: { axis: 'thighs', dr:  5 },
+        w: { axis: 'thighs', dr: -5 },
+        o: { axis: 'calves', dr:  5 },
+        p: { axis: 'calves', dr: -5 },
+    };
+
+    var keyState = { q: false, w: false, o: false, p: false };
+    var rotation = { thighs: 0, calves: 0 };
+
+    var updateRotation = function() {
+        var dt = 0;
+        var dc = 0;
+        for (var i = 0; i < keys.length; ++i) {
+            var key = keys[i];
+            var conf = keyConfig[key];
+
+            if (keyState[key]) {
+                if (conf.axis === 'thighs') {
+                    dt += conf.dr;
+                } else if (conf.axis === 'calves') {
+                    dc += conf.dr;
+                }
+            }
+        }
+
+        rotation.thighs += dt;
+        rotation.calves += dc;
+        return dt || dc;
+    };
+
+    var startListeningKeys = function() {
+        $(document).on('keydown', function(event) {
+            var key = keyCodeMap[ event.keyCode ];
+            if (key === 'q' || key === 'w' || key === 'o' || key === 'p') {
+                console.log('down: ' + key);
+                keyState[key] = true;
+            }
+        });
+        $(document).on('keyup', function(event) {
+            var key = keyCodeMap[ event.keyCode ];
+            if (key === 'q' || key === 'w' || key === 'o' || key === 'p') {
+                console.log('up: ' + key);
+                keyState[key] = false;
+            }
+        });
+    };
+
+    var socket = io.connect(url);
+    socket.on('connected', function(data) {
+        console.log('connected');
+        startListeningKeys();
+        setInterval(function() {
+            var updated = updateRotation();
+            if (updated) {
+                //console.log(JSON.stringify(rotation));
+                socket.emit('rotate', rotation);
+            }
+        }, 10);
+    });
+    socket.on('response', function(data) {
+        console.log('response: ' + JSON.stringify(data));
+    });
+</script>
+</head>
+
+<body>
+QWOP
+</body>
+
+</html>
+

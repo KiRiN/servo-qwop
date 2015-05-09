@@ -14,11 +14,16 @@
     };
     var keys = [ 'q', 'w', 'o', 'p' ];
     var keyConfig = {
-        q: { axis: 'thighs', dr:  5 },
-        w: { axis: 'thighs', dr: -5 },
-        o: { axis: 'calves', dr:  5 },
-        p: { axis: 'calves', dr: -5 },
+        q: { axis: 'thighs', dr:  2 },
+        w: { axis: 'thighs', dr: -2 },
+        o: { axis: 'calves', dr:  2 },
+        p: { axis: 'calves', dr: -2 },
     };
+    var limit = {
+        thighs: { min: 2, max: 98 },
+        calves: { min: 2, max: 98 },
+    };
+	
 
     var keyState = { q: false, w: false, o: false, p: false };
     var rotation = { thighs: 0, calves: 0 };
@@ -41,6 +46,12 @@
 
         rotation.thighs += dt;
         rotation.calves += dc;
+
+        if (rotation.thighs < limit.thighs.min) { rotation.thighs = limit.thighs.min; }
+        if (rotation.calves < limit.calves.min) { rotation.calves = limit.calves.min; }
+        if (rotation.thighs > limit.thighs.max) { rotation.thighs = limit.thighs.max; }
+        if (rotation.calves > limit.calves.max) { rotation.calves = limit.calves.max; }
+
         return dt || dc;
     };
 

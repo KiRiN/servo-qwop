@@ -14,45 +14,51 @@
     };
     var keys = [ 'q', 'w', 'o', 'p' ];
     var keyConfig = {
-        q: { axis: 'thighs', dr:  2 },
-        w: { axis: 'thighs', dr: -2 },
-        o: { axis: 'calves', dr:  2 },
-        p: { axis: 'calves', dr: -2 },
+        q: { axis: 'front_left',  dr:  2 },
+        w: { axis: 'front_right', dr:  -2 },
+        o: { axis: 'back_left',   dr:  -2 },
+        p: { axis: 'back_right',  dr:  2 },
     };
     var limit = {
-        thighs: { min: 2, max: 98 },
-        calves: { min: 2, max: 98 },
+        front_left:  { min: 2, max: 98 },
+        front_right: { min: 2, max: 98 },
+        back_left:   { min: 2, max: 98 },
+        back_right:  { min: 2, max: 98 },
     };
-	
 
     var keyState = { q: false, w: false, o: false, p: false };
-    var rotation = { thighs: 0, calves: 0 };
+    var rotation = {
+        front_left:  2,
+        front_right: 98,
+        back_left:   98,
+        back_right:  2,
+    };
 
     var updateRotation = function() {
-        var dt = 0;
-        var dc = 0;
+        var updated = false;
         for (var i = 0; i < keys.length; ++i) {
             var key = keys[i];
             var conf = keyConfig[key];
+            var axis = conf.axis;
 
+            var rotate;
             if (keyState[key]) {
-                if (conf.axis === 'thighs') {
-                    dt += conf.dr;
-                } else if (conf.axis === 'calves') {
-                    dc += conf.dr;
-                }
+                rotate = rotation[axis] + conf.dr;
+            } else {
+                rotate = rotation[axis] - conf.dr;
             }
+
+            if (rotate < limit[axis].min) { rotate = limit[axis].min; }
+            if (rotate > limit[axis].max) { rotate = limit[axis].max; }
+
+            if (rotate !== rotation[axis]) {
+                updated = true;
+            }
+
+            rotation[axis] = rotate;
         }
 
-        rotation.thighs += dt;
-        rotation.calves += dc;
-
-        if (rotation.thighs < limit.thighs.min) { rotation.thighs = limit.thighs.min; }
-        if (rotation.calves < limit.calves.min) { rotation.calves = limit.calves.min; }
-        if (rotation.thighs > limit.thighs.max) { rotation.thighs = limit.thighs.max; }
-        if (rotation.calves > limit.calves.max) { rotation.calves = limit.calves.max; }
-
-        return dt || dc;
+        return updated;
     };
 
     var startListeningKeys = function() {
@@ -79,10 +85,10 @@
         setInterval(function() {
             var updated = updateRotation();
             if (updated) {
-                //console.log(JSON.stringify(rotation));
+                console.log(JSON.stringify(rotation));
                 socket.emit('rotate', rotation);
             }
-        }, 10);
+        }, 20);
     });
     socket.on('response', function(data) {
         console.log('response: ' + JSON.stringify(data));
@@ -91,7 +97,12 @@
 </head>
 
 <body>
-QWOP
+<div style="font-size: 60px">
+    <div>Q: front left</div>
+    <div>W: front right</div>
+    <div>O: back left  </div>
+    <div>P: back right </div>
+</div>
 </body>
 
 </html>

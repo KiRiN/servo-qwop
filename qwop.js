@@ -5,8 +5,13 @@ var app = require('http').createServer(handler)
 var config = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
 
 // TODO config
-var thighsChannel = 1;
-var calvesChannel = 2;
+var legs = [ 'front_left', 'front_right', 'back_left', 'back_right' ];
+var channels = {
+    front_left:  1,
+    front_right: 0,
+    back_left: 4,
+    back_right: 2,
+};
 
 setDefaultRotation();
 app.listen(8080);
@@ -37,15 +42,17 @@ io.sockets.on('connection', function (socket) {
   console.log('connected');
   socket.emit('connected');
   socket.on('rotate', function(data) {
-    var thighs = data.thighs;
-    var calves = data.calves;
-
-    var thighsMessage = thighsChannel + '=' + data.thighs + '%\n';
-    var calvelMessage = calvesChannel + '=' + data.calves + '%\n';
-    var message = thighsMessage + calvelMessage;
+    console.log(JSON.stringify(data));
+    var message = '';
+    for (var i = 0; i < legs.length; ++i) {
+        leg = legs[i];
+        var channel = channels[leg];
+        var rot     = data[leg];
+        message += channel + '=' + rot + '%\n';
+    }
 
     writeStream.write(message);
-    //console.log(message);
+    console.log(message);
 
     socket.emit('response', data);
   });
